@@ -9,6 +9,7 @@ import Team from "./pages/Team";
 import FoodCourt from "./pages/FoodCourt";
 import Billing from "./pages/Billing";
 import Accounts from "./pages/Accounts";
+import PhotoGallery from "./pages/PhotoGallery";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/food-court" element={<FoodCourt />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/accounts" element={<Accounts />} />
+          <Route path="/photo-gallery" element={<PhotoGallery />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

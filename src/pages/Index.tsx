@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
-import { CalendarDays, Users, UtensilsCrossed, Receipt, Wallet, TrendingUp, UserCheck, Store } from "lucide-react";
+import { CalendarDays, Users, UtensilsCrossed, Receipt, Wallet, TrendingUp, UserCheck, Store, Camera } from "lucide-react";
 const modules = [{
   title: "Program Scheduling",
   description: "Manage event programs, assign dates, times, and venues with location mapping.",
@@ -32,6 +32,12 @@ const modules = [{
   icon: Wallet,
   href: "/accounts",
   color: "accent" as const
+}, {
+  title: "Photo Gallery",
+  description: "Upload and view event photos and memories from the celebration.",
+  icon: Camera,
+  href: "/photo-gallery",
+  color: "primary" as const
 }];
 const stats = [{
   title: "Total Programs",
