@@ -35,7 +35,7 @@ interface BillItem {
 
 export default function Billing() {
   const queryClient = useQueryClient();
-  const [selectedStall, setSelectedStall] = useState<string>("");
+  const [selectedStalls, setSelectedStalls] = useState<string[]>([]);
   const [billItems, setBillItems] = useState<BillItem[]>([]);
   
   const [registration, setRegistration] = useState({
@@ -120,7 +120,7 @@ export default function Billing() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['billing_transactions'] });
       setBillItems([]);
-      setSelectedStall("");
+      setSelectedStalls([]);
       toast.success("Bill generated successfully!");
     },
     onError: (error) => {
@@ -157,7 +157,17 @@ export default function Billing() {
     }
   });
 
-  const stallProducts = selectedStall ? products.filter(p => p.stall_id === selectedStall) : [];
+  const stallProducts = selectedStalls.length > 0 
+    ? products.filter(p => selectedStalls.includes(p.stall_id)) 
+    : [];
+
+  const toggleStallSelection = (stallId: string) => {
+    setSelectedStalls(prev => 
+      prev.includes(stallId) 
+        ? prev.filter(id => id !== stallId)
+        : [...prev, stallId]
+    );
+  };
 
   const addItemToBill = (product: Product) => {
     const existingItem = billItems.find(item => item.id === product.id);
@@ -193,14 +203,15 @@ export default function Billing() {
   };
 
   const generateBill = () => {
-    if (!selectedStall || billItems.length === 0) {
-      toast.error("Please select a stall and add items");
+    if (selectedStalls.length === 0 || billItems.length === 0) {
+      toast.error("Please select at least one counter and add items");
       return;
     }
     
     const total = calculateTotal();
+    // Use first selected stall as primary (for multi-counter, items track their stall)
     createBillMutation.mutate({
-      stall_id: selectedStall,
+      stall_id: selectedStalls[0],
       items: billItems,
       subtotal: total,
       total: total
@@ -266,23 +277,27 @@ export default function Billing() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Select Counter</Label>
-                    <select
-                      value={selectedStall}
-                      onChange={(e) => {
-                        setSelectedStall(e.target.value);
-                        setBillItems([]);
-                      }}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">Select stall</option>
+                    <Label>Select Counters (Multi-select)</Label>
+                    <div className="flex flex-wrap gap-2 p-3 border border-input rounded-md bg-background min-h-[60px]">
                       {stalls.map(s => (
-                        <option key={s.id} value={s.id}>{s.counter_name}</option>
+                        <Button
+                          key={s.id}
+                          variant={selectedStalls.includes(s.id) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleStallSelection(s.id)}
+                        >
+                          {s.counter_name}
+                        </Button>
                       ))}
-                    </select>
+                    </div>
+                    {selectedStalls.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {selectedStalls.length} counter(s) selected
+                      </p>
+                    )}
                   </div>
 
-                  {selectedStall && stallProducts.length > 0 && (
+                  {selectedStalls.length > 0 && stallProducts.length > 0 && (
                     <div className="space-y-2">
                       <Label>Add Items</Label>
                       <div className="flex flex-wrap gap-2">
@@ -301,8 +316,8 @@ export default function Billing() {
                     </div>
                   )}
 
-                  {selectedStall && stallProducts.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No products found for this stall</p>
+                  {selectedStalls.length > 0 && stallProducts.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No products found for selected counters</p>
                   )}
 
                   {billItems.length > 0 && (
