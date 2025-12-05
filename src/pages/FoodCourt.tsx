@@ -40,7 +40,8 @@ export default function FoodCourt() {
 
   const [newProduct, setNewProduct] = useState({
     item_name: "",
-    cost_price: ""
+    cost_price: "",
+    selling_price: ""  // MRP - manually entered
   });
 
   // Fetch stalls
@@ -99,13 +100,14 @@ export default function FoodCourt() {
 
   // Add product mutation
   const addProductMutation = useMutation({
-    mutationFn: async (product: { item_name: string; cost_price: number; stall_id: string }) => {
+    mutationFn: async (product: { item_name: string; cost_price: number; selling_price: number; stall_id: string }) => {
       const { data, error } = await supabase
         .from('products')
         .insert({
           item_name: product.item_name,
           cost_price: product.cost_price,
-          event_margin: EVENT_MARGIN,
+          selling_price: product.selling_price,  // MRP manually set
+          event_margin: EVENT_MARGIN,  // Stored but calculated at payment time
           stall_id: product.stall_id
         })
         .select()
@@ -115,7 +117,7 @@ export default function FoodCourt() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      setNewProduct({ item_name: "", cost_price: "" });
+      setNewProduct({ item_name: "", cost_price: "", selling_price: "" });
       setShowProductForm(false);
       toast.success("Product added successfully!");
     },
@@ -175,14 +177,15 @@ export default function FoodCourt() {
   };
 
   const handleAddProduct = () => {
-    if (newProduct.item_name && newProduct.cost_price && selectedStall) {
+    if (newProduct.item_name && newProduct.cost_price && newProduct.selling_price && selectedStall) {
       addProductMutation.mutate({
         item_name: newProduct.item_name,
         cost_price: parseFloat(newProduct.cost_price),
+        selling_price: parseFloat(newProduct.selling_price),
         stall_id: selectedStall
       });
     } else {
-      toast.error("Please fill all fields");
+      toast.error("Please fill all fields including MRP");
     }
   };
 
@@ -362,7 +365,8 @@ export default function FoodCourt() {
             {showProductForm && selectedStall && (
               <Card className="mb-6 animate-slide-up">
                 <CardHeader>
-                  <CardTitle>Add Product (20% Event Margin Applied)</CardTitle>
+                  <CardTitle>Add Product</CardTitle>
+                  <p className="text-sm text-muted-foreground">20% margin calculated only at payment time</p>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-3 gap-4">
@@ -386,10 +390,14 @@ export default function FoodCourt() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>MRP (Auto-calculated)</Label>
-                      <div className="h-10 flex items-center px-3 bg-muted rounded-md text-sm font-medium">
-                        ₹{newProduct.cost_price ? Math.ceil(parseFloat(newProduct.cost_price) * 1.2) : 0}
-                      </div>
+                      <Label htmlFor="mrpPrice">MRP / Selling Price (₹)</Label>
+                      <Input
+                        id="mrpPrice"
+                        type="number"
+                        value={newProduct.selling_price}
+                        onChange={(e) => setNewProduct({ ...newProduct, selling_price: e.target.value })}
+                        placeholder="Enter MRP manually"
+                      />
                     </div>
                     <div className="md:col-span-3 flex gap-2">
                       <Button onClick={handleAddProduct} disabled={addProductMutation.isPending}>
