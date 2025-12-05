@@ -14,7 +14,270 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      billing_transactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          items: Json
+          receipt_number: string
+          stall_id: string
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          items?: Json
+          receipt_number: string
+          stall_id: string
+          subtotal: number
+          total: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          items?: Json
+          receipt_number?: string
+          stall_id?: string
+          subtotal?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_transactions_stall_id_fkey"
+            columns: ["stall_id"]
+            isOneToOne: false
+            referencedRelation: "stalls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_paid: number
+          created_at: string | null
+          id: string
+          margin_deducted: number | null
+          narration: string | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          stall_id: string | null
+          total_billed: number | null
+        }
+        Insert: {
+          amount_paid: number
+          created_at?: string | null
+          id?: string
+          margin_deducted?: number | null
+          narration?: string | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          stall_id?: string | null
+          total_billed?: number | null
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string | null
+          id?: string
+          margin_deducted?: number | null
+          narration?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          stall_id?: string | null
+          total_billed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_stall_id_fkey"
+            columns: ["stall_id"]
+            isOneToOne: false
+            referencedRelation: "stalls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          cost_price: number
+          created_at: string | null
+          event_margin: number | null
+          id: string
+          item_name: string
+          selling_price: number | null
+          stall_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cost_price: number
+          created_at?: string | null
+          event_margin?: number | null
+          id?: string
+          item_name: string
+          selling_price?: number | null
+          stall_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string | null
+          event_margin?: number | null
+          id?: string
+          item_name?: string
+          selling_price?: number | null
+          stall_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_stall_id_fkey"
+            columns: ["stall_id"]
+            isOneToOne: false
+            referencedRelation: "stalls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          created_at: string | null
+          date: string
+          description: string | null
+          end_time: string
+          id: string
+          location_details: string | null
+          name: string
+          start_time: string
+          updated_at: string | null
+          venue: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          description?: string | null
+          end_time: string
+          id?: string
+          location_details?: string | null
+          name: string
+          start_time: string
+          updated_at?: string | null
+          venue: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          location_details?: string | null
+          name?: string
+          start_time?: string
+          updated_at?: string | null
+          venue?: string
+        }
+        Relationships: []
+      }
+      registrations: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string | null
+          id: string
+          mobile: string | null
+          name: string
+          receipt_number: string | null
+          registration_type: Database["public"]["Enums"]["registration_type"]
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          mobile?: string | null
+          name: string
+          receipt_number?: string | null
+          registration_type: Database["public"]["Enums"]["registration_type"]
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          mobile?: string | null
+          name?: string
+          receipt_number?: string | null
+          registration_type?: Database["public"]["Enums"]["registration_type"]
+        }
+        Relationships: []
+      }
+      stalls: {
+        Row: {
+          counter_name: string
+          created_at: string | null
+          email: string | null
+          id: string
+          is_verified: boolean | null
+          mobile: string | null
+          participant_name: string
+          registration_fee: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          counter_name: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_verified?: boolean | null
+          mobile?: string | null
+          participant_name: string
+          registration_fee?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          counter_name?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_verified?: boolean | null
+          mobile?: string | null
+          participant_name?: string
+          registration_fee?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          mobile: string | null
+          name: string
+          responsibilities: string | null
+          role: Database["public"]["Enums"]["team_role"]
+          shift_details: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          mobile?: string | null
+          name: string
+          responsibilities?: string | null
+          role?: Database["public"]["Enums"]["team_role"]
+          shift_details?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          mobile?: string | null
+          name?: string
+          responsibilities?: string | null
+          role?: Database["public"]["Enums"]["team_role"]
+          shift_details?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +286,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      payment_type: "participant" | "other"
+      registration_type:
+        | "stall_counter"
+        | "employment_booking"
+        | "employment_registration"
+      team_role: "admin" | "official" | "volunteer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +418,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_type: ["participant", "other"],
+      registration_type: [
+        "stall_counter",
+        "employment_booking",
+        "employment_registration",
+      ],
+      team_role: ["admin", "official", "volunteer"],
+    },
   },
 } as const
