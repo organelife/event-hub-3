@@ -125,12 +125,27 @@ export default function Accounts() {
     }
   });
 
-  // Calculate totals - exclude stall registration fees from collections
+  // Fetch stall registration payments (booking fees)
+  const { data: stallPayments = [] } = useQuery({
+    queryKey: ['stall_payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*, stalls(counter_name)')
+        .eq('payment_type', 'participant')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Calculate totals - include stall booking fees as revenue
   const totalBillingCollected = billingTransactions.reduce((sum: number, t: any) => sum + (t.total || 0), 0);
   const totalRegistrationCollected = registrations
-    .filter(r => r.registration_type !== "stall_counter") // Exclude stall registration fees
+    .filter(r => r.registration_type !== "stall_counter")
     .reduce((sum, r) => sum + (r.amount || 0), 0);
-  const totalCollected = totalBillingCollected + totalRegistrationCollected;
+  const totalStallBookingFees = stallPayments.reduce((sum: number, p: any) => sum + (p.amount_paid || 0), 0);
+  const totalCollected = totalBillingCollected + totalRegistrationCollected + totalStallBookingFees;
 
   const totalPaid = payments.reduce((sum: number, p: any) => sum + (p.amount_paid || 0), 0);
   const cashBalance = totalCollected - totalPaid;
@@ -189,7 +204,7 @@ export default function Accounts() {
     return new Date(dateStr).toLocaleDateString();
   };
 
-  // Build collections list for display - exclude stall registration fees
+  // Build collections list for display - include stall booking fees as revenue
   const collections = [
     ...billingTransactions.map((t: any) => ({
       id: t.id,
@@ -199,8 +214,16 @@ export default function Accounts() {
       amount: t.total,
       date: t.created_at
     })),
+    ...stallPayments.map((p: any) => ({
+      id: p.id,
+      type: 'stall_booking' as const,
+      category: 'Stall Booking Fee',
+      description: p.stalls?.counter_name || 'Unknown Stall',
+      amount: p.amount_paid,
+      date: p.created_at
+    })),
     ...registrations
-      .filter(r => r.registration_type !== "stall_counter") // Exclude stall registration fees
+      .filter(r => r.registration_type !== "stall_counter")
       .map(r => ({
         id: r.id,
         type: 'registration' as const,
@@ -392,7 +415,7 @@ export default function Accounts() {
           </TabsList>
 
           <TabsContent value="collections">
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -402,6 +425,19 @@ export default function Accounts() {
                     <div>
                       <p className="text-sm text-muted-foreground">Stall Billing</p>
                       <p className="text-xl font-bold text-foreground">₹{totalBillingCollected.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <Store className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Stall Booking Fee</p>
+                      <p className="text-xl font-bold text-foreground">₹{totalStallBookingFees.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
