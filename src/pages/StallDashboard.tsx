@@ -12,12 +12,14 @@ import { Store, Receipt, Wallet, LogOut, IndianRupee, ShoppingCart, CheckCircle,
 import { format } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.jpg";
-
 export default function StallDashboard() {
-  const { stall, logout, isLoading: authLoading } = useStallAuth();
+  const {
+    stall,
+    logout,
+    isLoading: authLoading
+  } = useStallAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (!authLoading && !stall) {
       navigate("/stall-login");
@@ -25,85 +27,100 @@ export default function StallDashboard() {
   }, [stall, authLoading, navigate]);
 
   // Fetch billing transactions for this stall (only cash orders)
-  const { data: transactions = [] } = useQuery({
+  const {
+    data: transactions = []
+  } = useQuery({
     queryKey: ["stall-transactions", stall?.id],
     queryFn: async () => {
       if (!stall?.id) return [];
-      const { data, error } = await supabase
-        .from("billing_transactions")
-        .select("*")
-        .eq("stall_id", stall.id)
-        .order("created_at", { ascending: false });
+      const {
+        data,
+        error
+      } = await supabase.from("billing_transactions").select("*").eq("stall_id", stall.id).order("created_at", {
+        ascending: false
+      });
       if (error) throw error;
       return data;
     },
-    enabled: !!stall?.id,
+    enabled: !!stall?.id
   });
 
   // Fetch payments for this stall
-  const { data: payments = [] } = useQuery({
+  const {
+    data: payments = []
+  } = useQuery({
     queryKey: ["stall-payments", stall?.id],
     queryFn: async () => {
       if (!stall?.id) return [];
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("stall_id", stall.id)
-        .order("created_at", { ascending: false });
+      const {
+        data,
+        error
+      } = await supabase.from("payments").select("*").eq("stall_id", stall.id).order("created_at", {
+        ascending: false
+      });
       if (error) throw error;
       return data;
     },
-    enabled: !!stall?.id,
+    enabled: !!stall?.id
   });
 
   // Mutation to update order status
   const updateOrderStatus = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const { error } = await supabase
-        .from("billing_transactions")
-        .update({ status })
-        .eq("id", orderId);
+    mutationFn: async ({
+      orderId,
+      status
+    }: {
+      orderId: string;
+      status: string;
+    }) => {
+      const {
+        error
+      } = await supabase.from("billing_transactions").update({
+        status
+      }).eq("id", orderId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["stall-transactions", stall?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["stall-transactions", stall?.id]
+      });
       toast.success("Order marked as delivered!");
     },
     onError: () => {
       toast.error("Failed to update order status");
-    },
+    }
   });
-
   const handleLogout = () => {
     logout();
     navigate("/stall-login");
   };
-
   const handleDeliverOrder = (orderId: string) => {
-    updateOrderStatus.mutate({ orderId, status: "delivered" });
+    updateOrderStatus.mutate({
+      orderId,
+      status: "delivered"
+    });
   };
-
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
+      </div>;
   }
-
   if (!stall) return null;
-
   const totalBilledCount = transactions.length;
   const totalBilledAmount = transactions.reduce((sum, t) => sum + Number(t.total), 0);
   const totalMarginDeducted = payments.reduce((sum, p) => sum + Number(p.margin_deducted || 0), 0);
   const newBillBalance = totalBilledAmount - totalMarginDeducted;
 
   // Separate pending and delivered orders
-  const pendingOrders = transactions.filter((t) => t.status !== "delivered");
-  const deliveredOrders = transactions.filter((t) => t.status === "delivered");
-
-  const OrderTable = ({ orders, showDeliverButton = false }: { orders: typeof transactions; showDeliverButton?: boolean }) => (
-    <div className="overflow-x-auto">
+  const pendingOrders = transactions.filter(t => t.status !== "delivered");
+  const deliveredOrders = transactions.filter(t => t.status === "delivered");
+  const OrderTable = ({
+    orders,
+    showDeliverButton = false
+  }: {
+    orders: typeof transactions;
+    showDeliverButton?: boolean;
+  }) => <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -117,8 +134,7 @@ export default function StallDashboard() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((tx) => (
-            <TableRow key={tx.id}>
+          {orders.map(tx => <TableRow key={tx.id}>
               <TableCell>{tx.serial_number}</TableCell>
               <TableCell className="font-mono text-xs">{tx.receipt_number}</TableCell>
               <TableCell>
@@ -136,27 +152,17 @@ export default function StallDashboard() {
               <TableCell className="text-xs">
                 {tx.created_at ? format(new Date(tx.created_at), "dd/MM/yy HH:mm") : "-"}
               </TableCell>
-              {showDeliverButton && (
-                <TableCell>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDeliverOrder(tx.id)}
-                    disabled={updateOrderStatus.isPending}
-                  >
+              {showDeliverButton && <TableCell>
+                  <Button size="sm" onClick={() => handleDeliverOrder(tx.id)} disabled={updateOrderStatus.isPending}>
                     <CheckCircle className="h-4 w-4 mr-1" />
                     Deliver
                   </Button>
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
+                </TableCell>}
+            </TableRow>)}
         </TableBody>
       </Table>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-background">
+    </div>;
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
@@ -206,7 +212,7 @@ export default function StallDashboard() {
 
           <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">New Bill Balance</CardTitle>
+              <CardTitle className="text-sm font-medium">Bill Balance</CardTitle>
               <Wallet className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
@@ -242,19 +248,11 @@ export default function StallDashboard() {
               </TabsList>
               
               <TabsContent value="pending">
-                {pendingOrders.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No pending orders</p>
-                ) : (
-                  <OrderTable orders={pendingOrders} showDeliverButton={true} />
-                )}
+                {pendingOrders.length === 0 ? <p className="text-center text-muted-foreground py-8">No pending orders</p> : <OrderTable orders={pendingOrders} showDeliverButton={true} />}
               </TabsContent>
               
               <TabsContent value="delivered">
-                {deliveredOrders.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No delivered orders yet</p>
-                ) : (
-                  <OrderTable orders={deliveredOrders} showDeliverButton={false} />
-                )}
+                {deliveredOrders.length === 0 ? <p className="text-center text-muted-foreground py-8">No delivered orders yet</p> : <OrderTable orders={deliveredOrders} showDeliverButton={false} />}
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -270,10 +268,7 @@ export default function StallDashboard() {
             <CardDescription>All billed transactions for your stall</CardDescription>
           </CardHeader>
           <CardContent>
-            {transactions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No billing records yet</p>
-            ) : (
-              <div className="overflow-x-auto">
+            {transactions.length === 0 ? <p className="text-center text-muted-foreground py-8">No billing records yet</p> : <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -286,8 +281,7 @@ export default function StallDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((tx) => (
-                      <TableRow key={tx.id}>
+                    {transactions.map(tx => <TableRow key={tx.id}>
                         <TableCell>{tx.serial_number}</TableCell>
                         <TableCell className="font-mono text-xs">{tx.receipt_number}</TableCell>
                         <TableCell>
@@ -307,15 +301,12 @@ export default function StallDashboard() {
                             {tx.status === "delivered" ? "Delivered" : "Pending"}
                           </Badge>
                         </TableCell>
-                      </TableRow>
-                    ))}
+                      </TableRow>)}
                   </TableBody>
                 </Table>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </main>
-    </div>
-  );
+    </div>;
 }
