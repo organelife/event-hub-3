@@ -12,9 +12,11 @@ import {
   CheckCircle,
   Clock,
   Trash2,
-  Loader2
+  Loader2,
+  CreditCard
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -27,6 +29,7 @@ const EVENT_MARGIN = 20;
 
 export default function FoodCourt() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [showStallForm, setShowStallForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [selectedStall, setSelectedStall] = useState<string>("");
@@ -319,10 +322,10 @@ export default function FoodCourt() {
                       {!stall.is_verified && (
                         <Button 
                           size="sm" 
-                          onClick={() => verifyStallMutation.mutate(stall.id)}
-                          disabled={verifyStallMutation.isPending}
+                          onClick={() => navigate('/billing')}
                         >
-                          Verify
+                          <CreditCard className="h-3 w-3 mr-1" />
+                          Paid Stall Registration
                         </Button>
                       )}
                       <Button 
