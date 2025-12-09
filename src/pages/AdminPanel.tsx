@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { 
   Shield, Users, Settings, LogOut, UserPlus, Key, 
-  Receipt, Calendar, Camera, UserCheck, UtensilsCrossed, Wallet 
+  Receipt, Calendar, Camera, UserCheck, UtensilsCrossed, Wallet,
+  ClipboardList, Store
 } from 'lucide-react';
 
 type AppModule = 'billing' | 'team' | 'programs' | 'accounts' | 'food_court' | 'photos' | 'registrations';
@@ -21,6 +22,12 @@ const moduleConfig: Record<AppModule, { label: string; description: string; icon
   photos: { label: 'Photo Gallery', description: 'Manage event photos', icon: Camera, href: '/photo-gallery', color: 'pink' },
   registrations: { label: 'Registrations', description: 'Manage event registrations', icon: UserCheck, href: '/accounts', color: 'cyan' },
 };
+
+// Additional admin-only features (not permission based)
+const additionalFeatures = [
+  { label: 'Survey Management', description: 'Manage panchayaths, wards & survey content', icon: ClipboardList, href: '/admin/survey', color: 'emerald' },
+  { label: 'Stall Enquiry', description: 'Manage stall enquiries', icon: Store, href: '/admin/stall-enquiry', color: 'amber' },
+];
 
 export default function AdminPanel() {
   const { admin, logout, isSuperAdmin, isLoading, hasPermission } = useAdminAuth();
@@ -106,6 +113,27 @@ export default function AdminPanel() {
                   </CardHeader>
                 </Card>
               </Link>
+              
+              {/* Additional Features for Super Admin */}
+              <h3 className="text-md font-medium text-muted-foreground mt-6 mb-4">Additional Features</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {additionalFeatures.map((feature) => {
+                  const IconComponent = feature.icon;
+                  return (
+                    <Link key={feature.href} to={feature.href}>
+                      <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                        <CardHeader>
+                          <div className={`h-10 w-10 rounded-lg bg-${feature.color}-500/10 flex items-center justify-center mb-2`}>
+                            <IconComponent className={`h-5 w-5 text-${feature.color}-500`} />
+                          </div>
+                          <CardTitle className="text-lg">{feature.label}</CardTitle>
+                          <CardDescription>{feature.description}</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </>
         )}

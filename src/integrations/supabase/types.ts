@@ -135,6 +135,27 @@ export type Database = {
           },
         ]
       }
+      panchayaths: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_paid: number
@@ -325,6 +346,87 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_content: {
+        Row: {
+          content_text: string | null
+          content_type: string
+          content_url: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_text?: string | null
+          content_type: string
+          content_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_text?: string | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      survey_shares: {
+        Row: {
+          id: string
+          mobile: string
+          name: string
+          panchayath_id: string
+          shared_at: string
+          view_count: number | null
+          ward_id: string
+        }
+        Insert: {
+          id?: string
+          mobile: string
+          name: string
+          panchayath_id: string
+          shared_at?: string
+          view_count?: number | null
+          ward_id: string
+        }
+        Update: {
+          id?: string
+          mobile?: string
+          name?: string
+          panchayath_id?: string
+          shared_at?: string
+          view_count?: number | null
+          ward_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_shares_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_shares_ward_id_fkey"
+            columns: ["ward_id"]
+            isOneToOne: false
+            referencedRelation: "wards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string | null
@@ -360,6 +462,41 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      wards: {
+        Row: {
+          created_at: string
+          id: string
+          panchayath_id: string
+          updated_at: string
+          ward_name: string | null
+          ward_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          panchayath_id: string
+          updated_at?: string
+          ward_name?: string | null
+          ward_number: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          panchayath_id?: string
+          updated_at?: string
+          ward_name?: string | null
+          ward_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wards_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

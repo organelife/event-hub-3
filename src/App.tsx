@@ -21,6 +21,8 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import ManageAdmins from "./pages/ManageAdmins";
 import PermissionManagement from "./pages/PermissionManagement";
+import SurveyAdmin from "./pages/admin/SurveyAdmin";
+import StallEnquiryAdmin from "./pages/admin/StallEnquiryAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +54,8 @@ const App = () => (
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/admin/manage-admins" element={<ManageAdmins />} />
               <Route path="/admin/permissions" element={<PermissionManagement />} />
+              <Route path="/admin/survey" element={<SurveyAdmin />} />
+              <Route path="/admin/stall-enquiry" element={<StallEnquiryAdmin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
