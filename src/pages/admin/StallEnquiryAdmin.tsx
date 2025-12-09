@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -454,60 +455,62 @@ export default function StallEnquiryAdmin() {
               <TabsContent value="enquiries">
                 {/* View Details Dialog */}
                 <Dialog open={!!viewingEnquiry} onOpenChange={(open) => !open && setViewingEnquiry(null)}>
-                  <DialogContent className="max-w-lg">
+                  <DialogContent className="max-w-lg max-h-[90vh]">
                     <DialogHeader>
                       <DialogTitle>Enquiry Details</DialogTitle>
                     </DialogHeader>
                     {viewingEnquiry && (
-                      <div className="space-y-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-muted-foreground text-xs">Name</Label>
-                            <p className="font-medium">{viewingEnquiry.name}</p>
-                          </div>
-                          <div>
-                            <Label className="text-muted-foreground text-xs">Mobile</Label>
-                            <p className="font-medium">{viewingEnquiry.mobile}</p>
-                          </div>
-                          <div>
-                            <Label className="text-muted-foreground text-xs">Panchayath</Label>
-                            <p className="font-medium">{viewingEnquiry.panchayaths?.name || '-'}</p>
-                          </div>
-                          <div>
-                            <Label className="text-muted-foreground text-xs">Ward</Label>
-                            <p className="font-medium">
-                              {viewingEnquiry.wards 
-                                ? `${viewingEnquiry.wards.ward_number}${viewingEnquiry.wards.ward_name ? ` - ${viewingEnquiry.wards.ward_name}` : ''}`
-                                : '-'}
-                            </p>
-                          </div>
-                          <div>
-                            <Label className="text-muted-foreground text-xs">Status</Label>
-                            <p className="font-medium capitalize">{viewingEnquiry.status}</p>
-                          </div>
-                          <div>
-                            <Label className="text-muted-foreground text-xs">Date</Label>
-                            <p className="font-medium">{new Date(viewingEnquiry.created_at).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                        {Object.keys(viewingEnquiry.responses).length > 0 && (
-                          <div className="border-t pt-4">
-                            <Label className="text-muted-foreground text-xs mb-2 block">Additional Responses</Label>
-                            <div className="space-y-3">
-                              {Object.entries(viewingEnquiry.responses).map(([fieldId, value]) => {
-                                const field = fields.find(f => f.id === fieldId);
-                                const label = field?.field_label || fieldId;
-                                return (
-                                  <div key={fieldId} className="border-b pb-2">
-                                    <p className="text-muted-foreground text-sm">{label}</p>
-                                    <p className="font-medium">{value}</p>
-                                  </div>
-                                );
-                              })}
+                      <ScrollArea className="max-h-[70vh] pr-4">
+                        <div className="space-y-4 py-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Name</Label>
+                              <p className="font-medium">{viewingEnquiry.name}</p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Mobile</Label>
+                              <p className="font-medium">{viewingEnquiry.mobile}</p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Panchayath</Label>
+                              <p className="font-medium">{viewingEnquiry.panchayaths?.name || '-'}</p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Ward</Label>
+                              <p className="font-medium">
+                                {viewingEnquiry.wards 
+                                  ? `${viewingEnquiry.wards.ward_number}${viewingEnquiry.wards.ward_name ? ` - ${viewingEnquiry.wards.ward_name}` : ''}`
+                                  : '-'}
+                              </p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Status</Label>
+                              <p className="font-medium capitalize">{viewingEnquiry.status}</p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Date</Label>
+                              <p className="font-medium">{new Date(viewingEnquiry.created_at).toLocaleDateString()}</p>
                             </div>
                           </div>
-                        )}
-                      </div>
+                          {Object.keys(viewingEnquiry.responses).length > 0 && (
+                            <div className="border-t pt-4">
+                              <Label className="text-muted-foreground text-xs mb-2 block">Additional Responses</Label>
+                              <div className="space-y-3">
+                                {Object.entries(viewingEnquiry.responses).map(([fieldId, value]) => {
+                                  const field = fields.find(f => f.id === fieldId);
+                                  const label = field?.field_label || fieldId;
+                                  return (
+                                    <div key={fieldId} className="border-b pb-2">
+                                      <p className="text-muted-foreground text-sm">{label}</p>
+                                      <p className="font-medium">{value}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </ScrollArea>
                     )}
                   </DialogContent>
                 </Dialog>
