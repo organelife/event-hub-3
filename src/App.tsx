@@ -23,6 +23,7 @@ import ManageAdmins from "./pages/ManageAdmins";
 import PermissionManagement from "./pages/PermissionManagement";
 import SurveyAdmin from "./pages/admin/SurveyAdmin";
 import StallEnquiryAdmin from "./pages/admin/StallEnquiryAdmin";
+import StallEnquiry from "./pages/StallEnquiry";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/photo-gallery" element={<PhotoGallery />} />
               <Route path="/survey" element={<Survey />} />
               <Route path="/survey-view" element={<SurveyViewPage />} />
+              <Route path="/stall-enquiry" element={<StallEnquiry />} />
               <Route path="/stall-login" element={<StallLogin />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               

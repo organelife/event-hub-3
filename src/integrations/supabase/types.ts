@@ -310,6 +310,99 @@ export type Database = {
         }
         Relationships: []
       }
+      stall_enquiries: {
+        Row: {
+          created_at: string
+          id: string
+          mobile: string
+          name: string
+          panchayath_id: string | null
+          responses: Json
+          status: string | null
+          updated_at: string
+          ward_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mobile: string
+          name: string
+          panchayath_id?: string | null
+          responses?: Json
+          status?: string | null
+          updated_at?: string
+          ward_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mobile?: string
+          name?: string
+          panchayath_id?: string | null
+          responses?: Json
+          status?: string | null
+          updated_at?: string
+          ward_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stall_enquiries_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stall_enquiries_ward_id_fkey"
+            columns: ["ward_id"]
+            isOneToOne: false
+            referencedRelation: "wards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stall_enquiry_fields: {
+        Row: {
+          conditional_value: string | null
+          created_at: string
+          display_order: number | null
+          field_label: string
+          field_type: string
+          id: string
+          is_active: boolean | null
+          is_required: boolean | null
+          options: Json | null
+          show_conditional_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          conditional_value?: string | null
+          created_at?: string
+          display_order?: number | null
+          field_label: string
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+          show_conditional_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          conditional_value?: string | null
+          created_at?: string
+          display_order?: number | null
+          field_label?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+          show_conditional_on?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stalls: {
         Row: {
           counter_name: string
