@@ -544,66 +544,6 @@ export default function FoodCourt() {
           </TabsContent>
 
           <TabsContent value="enquiries">
-            {/* View Details Dialog */}
-            <Dialog open={!!viewingEnquiry} onOpenChange={(open) => !open && setViewingEnquiry(null)}>
-              <DialogContent className="max-w-lg max-h-[85vh]">
-                <DialogHeader>
-                  <DialogTitle>Verified Enquiry Details</DialogTitle>
-                </DialogHeader>
-                {viewingEnquiry && (
-                  <ScrollArea className="max-h-[calc(85vh-100px)] pr-4">
-                    <div className="space-y-4 py-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-muted-foreground text-xs">Name</p>
-                          <p className="font-medium">{viewingEnquiry.name}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Mobile</p>
-                          <p className="font-medium">{viewingEnquiry.mobile}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Panchayath</p>
-                          <p className="font-medium">{viewingEnquiry.panchayaths?.name || '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Ward</p>
-                          <p className="font-medium">
-                            {viewingEnquiry.wards 
-                              ? `${viewingEnquiry.wards.ward_number}${viewingEnquiry.wards.ward_name ? ` - ${viewingEnquiry.wards.ward_name}` : ''}`
-                              : '-'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Date</p>
-                          <p className="font-medium">{new Date(viewingEnquiry.created_at).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      {Object.keys(viewingEnquiry.responses).length > 0 && (
-                        <div className="border-t pt-4">
-                          <p className="text-muted-foreground text-xs mb-3">Form Responses</p>
-                          <div className="space-y-0 rounded-lg overflow-hidden border">
-                            {Object.entries(viewingEnquiry.responses).map(([fieldId, value], index) => {
-                              const field = enquiryFields.find(f => f.id === fieldId);
-                              const label = field?.field_label || fieldId;
-                              return (
-                                <div 
-                                  key={fieldId} 
-                                  className={`p-3 ${index % 2 === 0 ? 'bg-muted/50' : 'bg-background'}`}
-                                >
-                                  <p className="font-semibold text-sm text-primary">{label}</p>
-                                  <p className="text-foreground mt-1">{value}</p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                )}
-              </DialogContent>
-            </Dialog>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {verifiedEnquiries.length === 0 ? (
@@ -656,6 +596,86 @@ export default function FoodCourt() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* View Details Dialog - moved outside Tabs for proper rendering */}
+        <Dialog open={!!viewingEnquiry} onOpenChange={(open) => !open && setViewingEnquiry(null)}>
+          <DialogContent className="max-w-lg max-h-[85vh]">
+            <DialogHeader>
+              <DialogTitle>Verified Enquiry Details</DialogTitle>
+            </DialogHeader>
+            {viewingEnquiry && (
+              <ScrollArea className="max-h-[calc(85vh-100px)] pr-4">
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-muted-foreground text-xs">Name</p>
+                      <p className="font-medium">{viewingEnquiry.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Mobile</p>
+                      <p className="font-medium">{viewingEnquiry.mobile}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Panchayath</p>
+                      <p className="font-medium">{viewingEnquiry.panchayaths?.name || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Ward</p>
+                      <p className="font-medium">
+                        {viewingEnquiry.wards 
+                          ? `${viewingEnquiry.wards.ward_number}${viewingEnquiry.wards.ward_name ? ` - ${viewingEnquiry.wards.ward_name}` : ''}`
+                          : '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Date</p>
+                      <p className="font-medium">{new Date(viewingEnquiry.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  {viewingEnquiry.responses && Object.keys(viewingEnquiry.responses).length > 0 && (
+                    <div className="border-t pt-4">
+                      <p className="text-muted-foreground text-xs mb-3">Form Responses</p>
+                      <div className="space-y-0 rounded-lg overflow-hidden border">
+                        {Object.entries(viewingEnquiry.responses).map(([fieldId, value], index) => {
+                          const field = enquiryFields.find(f => f.id === fieldId);
+                          const label = field?.field_label || fieldId;
+                          const isProductArray = Array.isArray(value) && value.length > 0 && value[0]?.product_name !== undefined;
+                          
+                          return (
+                            <div 
+                              key={fieldId} 
+                              className={`p-3 ${index % 2 === 0 ? 'bg-muted/50' : 'bg-background'}`}
+                            >
+                              <p className="font-semibold text-sm text-primary">{label}</p>
+                              {isProductArray ? (
+                                <div className="mt-2 space-y-2">
+                                  {(value as Array<{product_name: string; cost_price: string; selling_price: string; selling_unit: string}>).map((product, pIndex) => (
+                                    <div key={pIndex} className="bg-background rounded-md p-2 border text-sm">
+                                      <p className="font-medium">{product.product_name}</p>
+                                      <div className="grid grid-cols-3 gap-2 mt-1 text-xs text-muted-foreground">
+                                        <span>Cost: ₹{product.cost_price}</span>
+                                        <span>MRP: ₹{product.selling_price}</span>
+                                        <span>{product.selling_unit}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-foreground mt-1">
+                                  {typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
