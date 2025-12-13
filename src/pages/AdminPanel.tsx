@@ -11,7 +11,7 @@ import {
   ClipboardList, Store, Utensils
 } from 'lucide-react';
 
-type AppModule = 'billing' | 'team' | 'programs' | 'accounts' | 'food_court' | 'photos' | 'registrations' | 'survey' | 'stall_enquiry';
+type AppModule = 'billing' | 'team' | 'programs' | 'accounts' | 'food_court' | 'photos' | 'registrations' | 'survey' | 'stall_enquiry' | 'food_coupon';
 
 const moduleConfig: Record<AppModule, { label: string; description: string; icon: typeof Shield; href: string; color: string }> = {
   billing: { label: 'Billing', description: 'Manage bills and transactions', icon: Receipt, href: '/billing', color: 'blue' },
@@ -23,6 +23,7 @@ const moduleConfig: Record<AppModule, { label: string; description: string; icon
   registrations: { label: 'Registrations', description: 'Manage event registrations', icon: UserCheck, href: '/accounts', color: 'cyan' },
   survey: { label: 'Survey Management', description: 'Manage panchayaths, wards & survey content', icon: ClipboardList, href: '/admin/survey', color: 'emerald' },
   stall_enquiry: { label: 'Stall Enquiry', description: 'Manage stall enquiries', icon: Store, href: '/admin/stall-enquiry', color: 'amber' },
+  food_coupon: { label: 'Food Coupon', description: 'Manage food options and bookings', icon: Utensils, href: '/admin/food-coupon', color: 'orange' },
 };
 
 export default function AdminPanel() {
@@ -106,18 +107,6 @@ export default function AdminPanel() {
                     </div>
                     <CardTitle className="text-lg">Permission Management</CardTitle>
                     <CardDescription>Allocate permissions to admins</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-
-              <Link to="/admin/food-coupon">
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  <CardHeader>
-                    <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center mb-2">
-                      <Utensils className="h-5 w-5 text-orange-500" />
-                    </div>
-                    <CardTitle className="text-lg">Food Coupon</CardTitle>
-                    <CardDescription>Manage food options and bookings</CardDescription>
                   </CardHeader>
                 </Card>
               </Link>
