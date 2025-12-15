@@ -93,6 +93,19 @@ export default function Billing() {
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedBillForReturn, setSelectedBillForReturn] = useState<any>(null);
   const [returnItems, setReturnItems] = useState<ReturnItem[]>([]);
+
+  // Bill Edit/Delete state
+  const VERIFICATION_CODE = "9497589094";
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingAction, setPendingAction] = useState<{ type: 'edit' | 'delete'; bill: any } | null>(null);
+  const [editBillDialogOpen, setEditBillDialogOpen] = useState(false);
+  const [editingBill, setEditingBill] = useState<any>(null);
+  const [editBillForm, setEditBillForm] = useState({
+    customer_name: "",
+    customer_mobile: "",
+    total: ""
+  });
   const [returnReason, setReturnReason] = useState("");
 
   // Close dropdown when clicking outside
@@ -304,6 +317,49 @@ export default function Billing() {
     },
     onError: (error) => {
       toast.error("Failed to record sales return: " + error.message);
+    }
+  });
+
+  // Update bill mutation
+  const updateBillMutation = useMutation({
+    mutationFn: async (data: { id: string; customer_name?: string; customer_mobile?: string; total: number }) => {
+      const { error } = await supabase
+        .from('billing_transactions')
+        .update({
+          customer_name: data.customer_name || null,
+          customer_mobile: data.customer_mobile || null,
+          total: data.total,
+          subtotal: data.total
+        })
+        .eq('id', data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['billing_transactions'] });
+      setEditBillDialogOpen(false);
+      setEditingBill(null);
+      toast.success("Bill updated successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to update bill: " + error.message);
+    }
+  });
+
+  // Delete bill mutation
+  const deleteBillMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Delete related sales returns first
+      await supabase.from('sales_returns').delete().eq('bill_id', id);
+      const { error } = await supabase.from('billing_transactions').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['billing_transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['sales_returns'] });
+      toast.success("Bill deleted successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete bill: " + error.message);
     }
   });
 
@@ -568,6 +624,49 @@ export default function Billing() {
       case 'employment_registration': return 'Employment Registration';
       default: return type;
     }
+  };
+
+  // Bill edit/delete helpers
+  const requestBillAction = (type: 'edit' | 'delete', bill: any) => {
+    setPendingAction({ type, bill });
+    setVerificationCode("");
+    setVerificationDialogOpen(true);
+  };
+
+  const handleVerification = () => {
+    if (verificationCode !== VERIFICATION_CODE) {
+      toast.error("Invalid verification code");
+      return;
+    }
+    
+    if (pendingAction?.type === 'edit') {
+      setEditingBill(pendingAction.bill);
+      setEditBillForm({
+        customer_name: pendingAction.bill.customer_name || "",
+        customer_mobile: pendingAction.bill.customer_mobile || "",
+        total: pendingAction.bill.total?.toString() || ""
+      });
+      setEditBillDialogOpen(true);
+    } else if (pendingAction?.type === 'delete') {
+      deleteBillMutation.mutate(pendingAction.bill.id);
+    }
+    
+    setVerificationDialogOpen(false);
+    setPendingAction(null);
+    setVerificationCode("");
+  };
+
+  const handleUpdateBill = () => {
+    if (!editingBill || !editBillForm.total) {
+      toast.error("Please enter a valid total amount");
+      return;
+    }
+    updateBillMutation.mutate({
+      id: editingBill.id,
+      customer_name: editBillForm.customer_name || undefined,
+      customer_mobile: editBillForm.customer_mobile || undefined,
+      total: parseFloat(editBillForm.total)
+    });
   };
 
   // Sales return helpers
@@ -1021,19 +1120,35 @@ export default function Billing() {
                             </div>
                             <span className="font-bold text-lg text-primary">₹{bill.total}</span>
                           </div>
-                          <Button 
-                            size="sm" 
-                            className="w-full mt-2"
-                            onClick={() => markPaidMutation.mutate(bill.id)}
-                            disabled={markPaidMutation.isPending}
-                          >
-                            {markPaidMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                              <Check className="h-4 w-4 mr-2" />
-                            )}
-                            Cash Received
-                          </Button>
+                          <div className="flex gap-2 mt-2">
+                            <Button 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => markPaidMutation.mutate(bill.id)}
+                              disabled={markPaidMutation.isPending}
+                            >
+                              {markPaidMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              Cash Received
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => requestBillAction('edit', bill)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => requestBillAction('delete', bill)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1074,15 +1189,31 @@ export default function Billing() {
                                 Returned: ₹{totalReturned} ({billReturns.length} return{billReturns.length > 1 ? 's' : ''})
                               </div>
                             )}
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => openReturnDialog(bill)}
-                            >
-                              <RotateCcw className="h-4 w-4 mr-2" />
-                              Sales Return
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => openReturnDialog(bill)}
+                              >
+                                <RotateCcw className="h-4 w-4 mr-2" />
+                                Sales Return
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => requestBillAction('edit', bill)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => requestBillAction('delete', bill)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}
@@ -1728,6 +1859,101 @@ export default function Billing() {
                     Process Return
                   </Button>
                   <Button variant="outline" onClick={() => setReturnDialogOpen(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Verification Dialog */}
+        <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Verification Required</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <p className="text-sm text-muted-foreground">
+                Enter verification code to {pendingAction?.type === 'edit' ? 'edit' : 'delete'} this bill.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Verification Code</Label>
+                <Input
+                  id="verification-code"
+                  type="password"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="Enter code"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleVerification} 
+                  className="flex-1"
+                  variant={pendingAction?.type === 'delete' ? 'destructive' : 'default'}
+                >
+                  {pendingAction?.type === 'edit' ? 'Proceed to Edit' : 'Delete Bill'}
+                </Button>
+                <Button variant="outline" onClick={() => setVerificationDialogOpen(false)}>Cancel</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Bill Dialog */}
+        <Dialog open={editBillDialogOpen} onOpenChange={setEditBillDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Bill</DialogTitle>
+            </DialogHeader>
+            {editingBill && (
+              <div className="space-y-4 pt-4">
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{editingBill.stalls?.counter_name || 'Unknown'}</p>
+                      <p className="text-xs text-muted-foreground">{editingBill.receipt_number}</p>
+                    </div>
+                    <Badge>{editingBill.status}</Badge>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-bill-name">Customer Name</Label>
+                  <Input
+                    id="edit-bill-name"
+                    value={editBillForm.customer_name}
+                    onChange={(e) => setEditBillForm({ ...editBillForm, customer_name: e.target.value })}
+                    placeholder="Enter customer name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-bill-mobile">Customer Mobile</Label>
+                  <Input
+                    id="edit-bill-mobile"
+                    value={editBillForm.customer_mobile}
+                    onChange={(e) => setEditBillForm({ ...editBillForm, customer_mobile: e.target.value })}
+                    placeholder="Enter customer mobile"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-bill-total">Total Amount (₹) *</Label>
+                  <Input
+                    id="edit-bill-total"
+                    type="number"
+                    value={editBillForm.total}
+                    onChange={(e) => setEditBillForm({ ...editBillForm, total: e.target.value })}
+                    placeholder="Enter total amount"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleUpdateBill} 
+                    disabled={updateBillMutation.isPending} 
+                    className="flex-1"
+                  >
+                    {updateBillMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Save Changes
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditBillDialogOpen(false)}>Cancel</Button>
                 </div>
               </div>
             )}
