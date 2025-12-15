@@ -510,7 +510,10 @@ export default function FoodCourt() {
             <div className="flex justify-between mb-4 gap-4">
               <select
                 value={productPanchayathFilter}
-                onChange={(e) => setProductPanchayathFilter(e.target.value)}
+                onChange={(e) => {
+                  setProductPanchayathFilter(e.target.value);
+                  setSelectedStall(""); // Reset stall selection when panchayath changes
+                }}
                 className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">All Panchayaths</option>
@@ -525,9 +528,11 @@ export default function FoodCourt() {
                   className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="">Select Stall</option>
-                  {stalls.filter(s => s.is_verified).map(s => (
-                    <option key={s.id} value={s.id}>{s.counter_name}</option>
-                  ))}
+                  {stalls
+                    .filter(s => s.is_verified && (!productPanchayathFilter || s.panchayath_id === productPanchayathFilter))
+                    .map(s => (
+                      <option key={s.id} value={s.id}>{s.counter_name}</option>
+                    ))}
                 </select>
                 <Button 
                   onClick={() => setShowProductForm(!showProductForm)} 
@@ -544,7 +549,7 @@ export default function FoodCourt() {
               <Card className="mb-6 animate-slide-up">
                 <CardHeader>
                   <CardTitle>Add Product</CardTitle>
-                  <p className="text-sm text-muted-foreground">Commission rate used for calculating bill balance</p>
+                  <p className="text-sm text-muted-foreground">Commission rate auto-calculates from Cost & MRP, or MRP auto-calculates from Cost & Commission</p>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-4 gap-4">
@@ -563,7 +568,31 @@ export default function FoodCourt() {
                         id="costPrice"
                         type="number"
                         value={newProduct.cost_price}
-                        onChange={(e) => setNewProduct({ ...newProduct, cost_price: e.target.value })}
+                        onChange={(e) => {
+                          const costPrice = parseFloat(e.target.value) || 0;
+                          const sellingPrice = parseFloat(newProduct.selling_price) || 0;
+                          const commission = parseFloat(newProduct.event_margin) || 0;
+                          
+                          if (sellingPrice > 0 && costPrice > 0) {
+                            // Auto-calculate commission from cost and selling price
+                            const calculatedCommission = ((sellingPrice - costPrice) / sellingPrice) * 100;
+                            setNewProduct({ 
+                              ...newProduct, 
+                              cost_price: e.target.value,
+                              event_margin: calculatedCommission.toFixed(2)
+                            });
+                          } else if (commission > 0 && costPrice > 0) {
+                            // Auto-calculate selling price from cost and commission
+                            const calculatedSellingPrice = costPrice / (1 - commission / 100);
+                            setNewProduct({ 
+                              ...newProduct, 
+                              cost_price: e.target.value,
+                              selling_price: calculatedSellingPrice.toFixed(2)
+                            });
+                          } else {
+                            setNewProduct({ ...newProduct, cost_price: e.target.value });
+                          }
+                        }}
                         placeholder="Enter cost price"
                       />
                     </div>
@@ -573,8 +602,23 @@ export default function FoodCourt() {
                         id="mrpPrice"
                         type="number"
                         value={newProduct.selling_price}
-                        onChange={(e) => setNewProduct({ ...newProduct, selling_price: e.target.value })}
-                        placeholder="Enter MRP manually"
+                        onChange={(e) => {
+                          const sellingPrice = parseFloat(e.target.value) || 0;
+                          const costPrice = parseFloat(newProduct.cost_price) || 0;
+                          
+                          if (costPrice > 0 && sellingPrice > 0) {
+                            // Auto-calculate commission from cost and selling price
+                            const calculatedCommission = ((sellingPrice - costPrice) / sellingPrice) * 100;
+                            setNewProduct({ 
+                              ...newProduct, 
+                              selling_price: e.target.value,
+                              event_margin: calculatedCommission.toFixed(2)
+                            });
+                          } else {
+                            setNewProduct({ ...newProduct, selling_price: e.target.value });
+                          }
+                        }}
+                        placeholder="Enter MRP"
                       />
                     </div>
                     <div className="space-y-2">
@@ -583,7 +627,22 @@ export default function FoodCourt() {
                         id="eventMargin"
                         type="number"
                         value={newProduct.event_margin}
-                        onChange={(e) => setNewProduct({ ...newProduct, event_margin: e.target.value })}
+                        onChange={(e) => {
+                          const commission = parseFloat(e.target.value) || 0;
+                          const costPrice = parseFloat(newProduct.cost_price) || 0;
+                          
+                          if (costPrice > 0 && commission > 0 && commission < 100) {
+                            // Auto-calculate selling price from cost and commission
+                            const calculatedSellingPrice = costPrice / (1 - commission / 100);
+                            setNewProduct({ 
+                              ...newProduct, 
+                              event_margin: e.target.value,
+                              selling_price: calculatedSellingPrice.toFixed(2)
+                            });
+                          } else {
+                            setNewProduct({ ...newProduct, event_margin: e.target.value });
+                          }
+                        }}
                         placeholder="20"
                       />
                     </div>
