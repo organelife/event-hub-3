@@ -110,10 +110,13 @@ export default function StallEnquiryAdmin() {
     }
   });
 
-  // Filter enquiries by panchayath
+  // Filter enquiries by panchayath and status
   const filteredEnquiries = selectedPanchayath === 'all' 
     ? enquiries 
     : enquiries.filter(e => e.panchayath_id === selectedPanchayath);
+
+  const pendingEnquiries = filteredEnquiries.filter(e => e.status === 'pending');
+  const completedEnquiries = filteredEnquiries.filter(e => e.status === 'verified');
 
   const addFieldMutation = useMutation({
     mutationFn: async () => {
@@ -321,9 +324,10 @@ export default function StallEnquiryAdmin() {
             <CardDescription>Manage stall enquiry form fields and view submissions</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="enquiries">
+            <Tabs defaultValue="pending-enquiries">
               <TabsList className="mb-4">
-                <TabsTrigger value="enquiries">Enquiries ({enquiries.length})</TabsTrigger>
+                <TabsTrigger value="pending-enquiries">Pending Enquiries ({pendingEnquiries.length})</TabsTrigger>
+                <TabsTrigger value="completed-enquiries">Completed Enquiries ({completedEnquiries.length})</TabsTrigger>
                 <TabsTrigger value="fields">Form Fields</TabsTrigger>
               </TabsList>
 
@@ -519,7 +523,7 @@ export default function StallEnquiryAdmin() {
                 </Table>
               </TabsContent>
 
-              <TabsContent value="enquiries">
+              <TabsContent value="pending-enquiries">
                 {/* Panchayath Filter */}
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -537,7 +541,7 @@ export default function StallEnquiryAdmin() {
                     </Select>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    Showing {filteredEnquiries.length} of {enquiries.length} enquiries
+                    Showing {pendingEnquiries.length} pending enquiries
                   </span>
                 </div>
 
@@ -549,23 +553,22 @@ export default function StallEnquiryAdmin() {
                       <TableHead>Panchayath</TableHead>
                       <TableHead>Ward</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {enquiriesLoading ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center">Loading...</TableCell>
+                        <TableCell colSpan={6} className="text-center">Loading...</TableCell>
                       </TableRow>
-                    ) : filteredEnquiries.length === 0 ? (
+                    ) : pendingEnquiries.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          {selectedPanchayath !== 'all' ? 'No enquiries for selected panchayath' : 'No enquiries yet'}
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                          {selectedPanchayath !== 'all' ? 'No pending enquiries for selected panchayath' : 'No pending enquiries'}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredEnquiries.map((enquiry) => (
+                      pendingEnquiries.map((enquiry) => (
                         <TableRow key={enquiry.id}>
                           <TableCell className="font-medium">{enquiry.name}</TableCell>
                           <TableCell>{enquiry.mobile}</TableCell>
@@ -577,14 +580,96 @@ export default function StallEnquiryAdmin() {
                           </TableCell>
                           <TableCell>{new Date(enquiry.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <span className={`capitalize px-2 py-1 rounded text-xs ${
-                              enquiry.status === 'verified' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {enquiry.status}
-                            </span>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setViewingEnquiry(enquiry)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => verifyEnquiryMutation.mutate(enquiry.id)}
+                                disabled={verifyEnquiryMutation.isPending}
+                                title="Verify"
+                              >
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setDeletingEnquiry(enquiry)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
                           </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+
+              <TabsContent value="completed-enquiries">
+                {/* Panchayath Filter */}
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Filter by Panchayath:</Label>
+                    <Select value={selectedPanchayath} onValueChange={setSelectedPanchayath}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="All Panchayaths" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Panchayaths</SelectItem>
+                        {panchayaths.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    Showing {completedEnquiries.length} completed enquiries
+                  </span>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Mobile</TableHead>
+                      <TableHead>Panchayath</TableHead>
+                      <TableHead>Ward</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {enquiriesLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center">Loading...</TableCell>
+                      </TableRow>
+                    ) : completedEnquiries.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                          {selectedPanchayath !== 'all' ? 'No completed enquiries for selected panchayath' : 'No completed enquiries'}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      completedEnquiries.map((enquiry) => (
+                        <TableRow key={enquiry.id}>
+                          <TableCell className="font-medium">{enquiry.name}</TableCell>
+                          <TableCell>{enquiry.mobile}</TableCell>
+                          <TableCell>{enquiry.panchayaths?.name || '-'}</TableCell>
+                          <TableCell>
+                            {enquiry.wards 
+                              ? `${enquiry.wards.ward_number}${enquiry.wards.ward_name ? ` - ${enquiry.wards.ward_name}` : ''}`
+                              : '-'}
+                          </TableCell>
+                          <TableCell>{new Date(enquiry.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <Button 
@@ -594,27 +679,15 @@ export default function StallEnquiryAdmin() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              {enquiry.status !== 'verified' ? (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  onClick={() => verifyEnquiryMutation.mutate(enquiry.id)}
-                                  disabled={verifyEnquiryMutation.isPending}
-                                  title="Verify"
-                                >
-                                  <CheckCircle className="h-4 w-4 text-green-600" />
-                                </Button>
-                              ) : (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  onClick={() => restoreEnquiryMutation.mutate(enquiry.id)}
-                                  disabled={restoreEnquiryMutation.isPending}
-                                  title="Restore to Pending"
-                                >
-                                  <RotateCcw className="h-4 w-4 text-orange-600" />
-                                </Button>
-                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => restoreEnquiryMutation.mutate(enquiry.id)}
+                                disabled={restoreEnquiryMutation.isPending}
+                                title="Restore to Pending"
+                              >
+                                <RotateCcw className="h-4 w-4 text-orange-600" />
+                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="icon"
